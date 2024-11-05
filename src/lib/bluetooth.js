@@ -20,10 +20,8 @@ class BluetoothConnection {
       console.log('Connection already in progress...');
       return;
     }
-
     this.isConnecting = true;
     this.reconnectAttempts = 0;
-
     try {
       const result = await this._connect();
       this.isConnecting = false;
@@ -36,7 +34,6 @@ class BluetoothConnection {
 
   async _connect() {
     try {
-      // 이전 연결 정리
       if (this.device?.gatt?.connected) {
         await this.device.gatt.disconnect();
         await new Promise(resolve => setTimeout(resolve, 1000));
@@ -46,32 +43,26 @@ class BluetoothConnection {
       this.device = await navigator.bluetooth.requestDevice({
         filters: [{ name: 'Bandi-Pico' }],
         optionalServices: [
-          '0000180a-0000-1000-8000-00805f9b34fb', // Device Information
-          '0000ffe0-0000-1000-8000-00805f9b34fb', // Custom Service
-          '0000ffb0-0000-1000-8000-00805f9b34fb', // Sensor Data Service
-          '0000ffd0-0000-1000-8000-00805f9b34fb', // Gas Sensor Service
-          '0000ffc0-0000-1000-8000-00805f9b34fb'  // Temperature/Humidity Service
+          '0000180a-0000-1000-8000-00805f9b34fb',
+          '0000ffe0-0000-1000-8000-00805f9b34fb',
+          '0000ffb0-0000-1000-8000-00805f9b34fb',
+          '0000ffd0-0000-1000-8000-00805f9b34fb',
+          '0000ffc0-0000-1000-8000-00805f9b34fb'
         ]
       });
 
       console.log('Device selected:', this.device.name);
-      
-      // GATT 연결
       this.server = await this.device.gatt.connect();
       console.log('Connected to GATT Server');
 
-      // 센서 활성화
       await this.enableSensors();
-      
-      // 센서 데이터 서비스 설정
+
       const service = await this.server.getPrimaryService('0000ffb0-0000-1000-8000-00805f9b34fb');
       this.characteristic = await service.getCharacteristic('0000ffb3-0000-1000-8000-00805f9b34fb');
-      
-      // 알림 시작
+
       await this.characteristic.startNotifications();
       this.characteristic.addEventListener('characteristicvaluechanged', this.notificationCallback);
 
-      // 연결 해제 이벤트 리스너
       this.device.addEventListener('gattserverdisconnected', () => {
         console.log('Device disconnected');
         if (this.disconnectCallback) {
@@ -79,12 +70,8 @@ class BluetoothConnection {
         }
       });
 
-      // 연결 성공 시 재시도 횟수 초기화
       this.reconnectAttempts = 0;
-      
-      // 연결 모니터링 추가
       this._startConnectionMonitoring();
-
       console.log('Connection successful!');
 
       return {
@@ -115,7 +102,6 @@ class BluetoothConnection {
             console.warn('Connection check failed:', error);
             if (!this.isConnecting) {
               try {
-                // 재연결 시도
                 await this._reconnect();
               } catch (reconnectError) {
                 console.error('Reconnection failed:', reconnectError);
@@ -127,30 +113,20 @@ class BluetoothConnection {
             }
           });
       }
-    }, 10000); // 10초마다 체크 (5초에서 10초로 변경)
+    }, 10000);
   }
 
   async _reconnect() {
     if (this.isConnecting) return;
-    
     this.isConnecting = true;
     try {
       console.log('Attempting to reconnect...');
-      
-      // GATT 서버에 재연결
       this.server = await this.device.gatt.connect();
-      
-      // 센서 재활성화
       await this.enableSensors();
-      
-      // 센서 데이터 서비스 재설정
       const service = await this.server.getPrimaryService('0000ffb0-0000-1000-8000-00805f9b34fb');
       this.characteristic = await service.getCharacteristic('0000ffb3-0000-1000-8000-00805f9b34fb');
-      
-      // 알림 재시작
       await this.characteristic.startNotifications();
       this.characteristic.addEventListener('characteristicvaluechanged', this.notificationCallback);
-      
       console.log('Reconnection successful');
       this.isConnecting = false;
     } catch (error) {
@@ -161,24 +137,20 @@ class BluetoothConnection {
 
   async enableSensors() {
     try {
-      // 미세먼지 센서 활성화
       const dustService = await this.server.getPrimaryService('0000ffe0-0000-1000-8000-00805f9b34fb');
       const dustChar = await dustService.getCharacteristic('0000ffe1-0000-1000-8000-00805f9b34fb');
       await dustChar.writeValue(new Uint8Array([0x01]));
       console.log('Dust sensor enabled');
 
-      // 가스 센서 활성화
       const gasService = await this.server.getPrimaryService('0000ffd0-0000-1000-8000-00805f9b34fb');
       const gasChar = await gasService.getCharacteristic('0000ffd1-0000-1000-8000-00805f9b34fb');
       await gasChar.writeValue(new Uint8Array([0x01]));
       console.log('Gas sensor enabled');
 
-      // 온습도 센서 활성화
       const thService = await this.server.getPrimaryService('0000ffc0-0000-1000-8000-00805f9b34fb');
       const thChar = await thService.getCharacteristic('0000ffc1-0000-1000-8000-00805f9b34fb');
       await thChar.writeValue(new Uint8Array([0x01]));
       console.log('Temperature/Humidity sensor enabled');
-
     } catch (error) {
       console.error('Error enabling sensors:', error);
     }
@@ -189,12 +161,10 @@ class BluetoothConnection {
       if (this.monitoringInterval) {
         clearInterval(this.monitoringInterval);
       }
-      
       if (this.characteristic) {
         await this.characteristic.stopNotifications();
         this.characteristic.removeEventListener('characteristicvaluechanged', this.notificationCallback);
       }
-      
       if (this.device?.gatt?.connected) {
         await this.device.gatt.disconnect();
       }
@@ -217,16 +187,12 @@ export const connectBleDevice = async (onDisconnect, onNotification) => {
 
 export const parseSensorData = (value) => {
   try {
-    // DataView를 사용하여 데이터 접근
-    const dataView = new DataView(value.buffer);
     const data = new Uint8Array(value.buffer);
-    
     if (data.length < 18) {
       console.warn('Received incomplete data packet');
       return null;
     }
 
-    // 데이터 파싱 결과를 임시 객체에 저장
     const parsedData = {
       pm25: {
         value: (data[0] << 8) + data[1],
@@ -254,13 +220,12 @@ export const parseSensorData = (value) => {
       }
     };
 
-    // 원본 데이터 배열을 직접 복사
     const rawDataArray = new Uint8Array(data.length);
     rawDataArray.set(data);
-    
+
     return {
       ...parsedData,
-      _raw: Array.from(rawDataArray) // 배열로 변환하여 저장
+      _raw: Array.from(rawDataArray)
     };
   } catch (error) {
     console.error('Error parsing sensor data:', error);
