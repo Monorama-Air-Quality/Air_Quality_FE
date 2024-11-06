@@ -98,7 +98,7 @@ class WebSocketManager {
         let location = { latitude: null, longitude: null };
         try {
           console.log('Fetching location for message...');
-          location = await getLocationFromIP();
+          location = await getCurrentLocation();
           console.log('Location fetched for message:', location);
         } catch (locationError) {
           console.error('Failed to fetch location for message:', locationError);
@@ -198,5 +198,33 @@ const getLocationFromIP = async () => {
     return { latitude: null, longitude: null };
   }
 };
+
+
+const getCurrentLocation = async () => {
+  try {
+    console.log('Starting location fetch from browser...');
+
+    // Promise를 async/await로 래핑
+    const position = await new Promise((resolve, reject) => {
+      const options = {
+        enableHighAccuracy: true,
+        timeout: 5000,
+        maximumAge: 0
+      };
+
+      navigator.geolocation.getCurrentPosition(resolve, reject, options);
+    });
+
+    const { latitude, longitude } = position.coords;
+    console.log(`Location found - Lat: ${latitude}, Lng: ${longitude}`);
+    return { latitude, longitude };
+
+  } catch (error) {
+    console.error('Error fetching location:', error);
+    return { latitude: null, longitude: null };
+  }
+};
+
+export { getCurrentLocation };
 
 export const wsManager = new WebSocketManager();
