@@ -7,7 +7,7 @@ import { Bluetooth, Signal } from 'lucide-react';
 import { connectBleDevice, parseSensorData } from '../lib/bluetooth';
 import { SensorCard } from './SensorCard';
 import { DataLog } from './DataLog';
-import { wsManager } from '../lib/websocket';
+import { wsManager, getCurrentLocation } from '../lib/websocket';
 import { api } from '../lib/api';
 
 export const getUnit = (key) => {
@@ -40,6 +40,7 @@ const BleDeviceMonitor = () => {
   const [dataLogs, setDataLogs] = useState([]);
   const [error, setError] = useState(null);
   const [location, setLocation] = useState(null);
+  const [locationError, setLocationError] = useState(null);
   const logIdRef = useRef(0);
 
   useEffect(() => {
@@ -53,6 +54,22 @@ const BleDeviceMonitor = () => {
       };
     }
   }, [device]);
+
+  useEffect(() => {
+    const fetchLocation = async () => {
+      try {
+        setLocationError(null);
+        const currentLocation = await getCurrentLocation();
+        setLocation(currentLocation);
+        console.log('Location fetched:', currentLocation);
+      } catch (error) {
+        setLocationError(error.message);
+        console.error('Location error:', error);
+      }
+    };
+
+    fetchLocation();
+  }, []);
 
   const handleWebSocketData = useCallback((data) => {
     if (data.type === 'SENSOR_DATA') {
@@ -158,6 +175,22 @@ const BleDeviceMonitor = () => {
           </CardTitle>
         </CardHeader>
         <CardContent>
+          <div className="mb-4">
+            <h3 className="text-lg font-semibold mb-2">Location Info</h3>
+            {locationError ? (
+              <Alert variant="destructive">
+                <AlertDescription>Location Error: {locationError}</AlertDescription>
+              </Alert>
+            ) : location ? (
+              <div className="bg-gray-100 p-3 rounded-md">
+                <p>Latitude: {location.latitude}</p>
+                <p>Longitude: {location.longitude}</p>
+              </div>
+            ) : (
+              <p className="text-gray-500">Fetching location...</p>
+            )}
+          </div>
+
           <div className="space-y-4">
             {!device ? (
               <Button onClick={handleConnect} className="w-full">
@@ -179,12 +212,6 @@ const BleDeviceMonitor = () => {
                     Disconnect
                   </Button>
                 </div>
-                
-                {location && (
-                  <div className="text-sm text-gray-600">
-                    Location: {location.latitude}, {location.longitude}
-                  </div>
-                )}
                 
                 {sensorData && (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
