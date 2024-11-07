@@ -5,7 +5,10 @@ class WebSocketManager {
     this.reconnectAttempts = 0;
     this.maxReconnectAttempts = 5;
     this.messageHandlers = new Map();
-    this.wsUrl = 'ws://localhost:8080/ws';  // 프록시를 통한 연결
+    this.wsUrl = process.env.REACT_APP_WS_URL;
+
+    console.log('Current environment:', process.env.NODE_ENV);  // 'development' 또는 'production'
+    console.log('WebSocket URL:', this.wsUrl);
   }
 
   connect() {
