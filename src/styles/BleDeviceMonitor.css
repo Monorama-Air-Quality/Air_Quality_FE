@@ -1,0 +1,57 @@
+.device-monitor-container {
+  @apply w-full max-w-4xl mx-auto p-4 min-h-screen;
+}
+
+.device-header {
+  @apply flex items-center justify-between flex-wrap gap-2 p-2;
+}
+
+.device-info {
+  @apply flex items-center gap-2 flex-wrap;
+}
+
+.device-controls {
+  @apply flex gap-2 flex-wrap;
+}
+
+.connect-button {
+  @apply bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg 
+  shadow-md hover:shadow-lg transition-all duration-200 flex items-center gap-2
+  hover:scale-105 active:scale-95;
+}
+
+.disconnect-button {
+  @apply bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-4 rounded-lg 
+  shadow-md hover:shadow-lg transition-all duration-200 flex items-center gap-2
+  hover:scale-105 active:scale-95;
+}
+
+.location-info {
+  @apply mt-2 p-2 bg-gray-100 rounded-lg text-sm;
+}
+
+.sensor-grid {
+  @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-4;
+}
+
+.data-log-container {
+  @apply h-[calc(100vh-24rem)] overflow-y-auto;
+}
+
+.realtime-data-section {
+  @apply mt-6 border-t pt-4;
+}
+
+@media (max-width: 640px) {
+  .device-monitor-container {
+    @apply p-2;
+  }
+
+  .device-header {
+    @apply flex-col items-start;
+  }
+
+  .device-controls {
+    @apply w-full justify-between;
+  }
+} 
