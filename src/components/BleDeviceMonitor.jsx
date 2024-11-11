@@ -110,6 +110,13 @@ const BleDeviceMonitor = () => {
       const data = parseSensorData(event.target.value);
       if (data) {
         setSensorData(data);
+        
+        wsManager.send('SENSOR_DATA', {
+          deviceId: device?.id,
+          timestamp: new Date().toISOString(),
+          data
+        });
+        
         updateDataLogs(data);
       }
     } catch (error) {
@@ -117,15 +124,6 @@ const BleDeviceMonitor = () => {
       setError('Error processing sensor data');
     } finally {
       setIsLoadingData(false);
-    }
-  }, [updateDataLogs]);
-
-  const handleNotification = useCallback((event) => {
-    const value = event.target.value;
-    const parsedData = parseSensorData(value);
-    if (parsedData) {
-      setSensorData(parsedData);
-      updateDataLogs(parsedData);
     }
   }, [updateDataLogs]);
 
@@ -219,15 +217,7 @@ const BleDeviceMonitor = () => {
 
           <div className="realtime-data-section">
             <h3 className="text-lg font-semibold mb-3 text-gray-800 flex items-center gap-2">
-              <div 
-                className={`w-2 h-2 rounded-full transition-colors duration-300 ${
-                  !device 
-                    ? 'bg-gray-400' 
-                    : !sensorData 
-                      ? 'bg-yellow-500 animate-pulse' 
-                      : 'bg-green-500 animate-pulse'
-                }`}
-              />
+              <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
               Realtime Data
             </h3>
             {!device ? (
