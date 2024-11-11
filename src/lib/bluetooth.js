@@ -1,3 +1,19 @@
+const checkBluetoothSupport = () => {
+  if (!navigator.bluetooth) {
+    if (/Android/i.test(navigator.userAgent)) {
+      throw new Error(
+        'Android에서는 Chrome 또는 Samsung Internet 브라우저를 사용해주세요. ' +
+        'Chrome 설정(chrome://flags)에서 "Experimental Web Platform features"와 ' +
+        '"Web Bluetooth"를 활성화해야 할 수 있습니다.'
+      );
+    } else if (/iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+      throw new Error('iOS는 현재 Web Bluetooth API를 지원하지 않습니다. 데스크톱 Chrome을 사용해주세요.');
+    } else {
+      throw new Error('이 브라우저는 Bluetooth 기능을 지원하지 않습니다. Chrome을 사용해주세요.');
+    }
+  }
+};
+
 class BluetoothConnection {
   constructor() {
     this.device = null;
@@ -20,9 +36,11 @@ class BluetoothConnection {
       console.log('Connection already in progress...');
       return;
     }
-    this.isConnecting = true;
-    this.reconnectAttempts = 0;
+
     try {
+      checkBluetoothSupport();
+      this.isConnecting = true;
+      this.reconnectAttempts = 0;
       const result = await this._connect();
       this.isConnecting = false;
       return result;
@@ -43,6 +61,7 @@ class BluetoothConnection {
       this.device = await navigator.bluetooth.requestDevice({
         filters: [{ name: 'Bandi-Pico' }],
         optionalServices: [
+          '0000180a-0000-1000-8000-00805f9b34fb', // Device Information Service
           '0000180a-0000-1000-8000-00805f9b34fb',
           '0000ffe0-0000-1000-8000-00805f9b34fb',
           '0000ffb0-0000-1000-8000-00805f9b34fb',
@@ -149,7 +168,7 @@ class BluetoothConnection {
 
       const thService = await this.server.getPrimaryService('0000ffc0-0000-1000-8000-00805f9b34fb');
       const thChar = await thService.getCharacteristic('0000ffc1-0000-1000-8000-00805f9b34fb');
-      await thChar.writeValue(new Uint8Array([0x01]));
+      await thChar.writeValue(new Uint8Array([0x02]));
       console.log('Temperature/Humidity sensor enabled');
     } catch (error) {
       console.error('Error enabling sensors:', error);
