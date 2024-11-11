@@ -164,44 +164,6 @@ class WebSocketManager {
   }
 }
 
-const getLocationFromIP = async () => {
-  try {
-    console.log('Starting location fetch from IP...');
-    const apiKey = "5ff113b8507958";
-    const url = `https://ipinfo.io/json?token=${apiKey}`;
-
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5초 타임아웃
-
-    const response = await fetch(url, {
-      signal: controller.signal,
-      headers: {
-        'Accept': 'application/json'
-      }
-    });
-
-    clearTimeout(timeoutId);
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    const data = await response.json();
-    console.log('IP info received:', data);
-
-    if (data.loc) {
-      const [latitude, longitude] = data.loc.split(",").map(Number);
-      console.log(`Location found - Lat: ${latitude}, Lng: ${longitude}`);
-      return { latitude, longitude };
-    }
-
-    throw new Error('Location data not found in response');
-  } catch (error) {
-    console.error('Error fetching location:', error);
-    return { latitude: null, longitude: null };
-  }
-};
-
 
 const getCurrentLocation = async () => {
   try {
