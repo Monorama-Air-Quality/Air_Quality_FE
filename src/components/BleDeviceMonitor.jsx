@@ -9,6 +9,9 @@ import { SensorCard } from './SensorCard';
 import { DataLog } from './DataLog';
 import { wsManager, getCurrentLocation } from '../lib/websocket';
 import { api } from '../lib/api';
+import { DeviceInfoModal } from './DeviceInfoModal';
+import '../styles/BleDeviceMonitor.css';
+import { Loading } from './ui/loading';
 
 export const getUnit = (key) => {
   const units = {
@@ -42,6 +45,8 @@ const BleDeviceMonitor = () => {
   const [location, setLocation] = useState(null);
   const [locationError, setLocationError] = useState(null);
   const logIdRef = useRef(0);
+  const [isConnecting, setIsConnecting] = useState(false);
+  const [isLoadingData, setIsLoadingData] = useState(false);
 
   useEffect(() => {
     if (device) {
@@ -101,33 +106,33 @@ const BleDeviceMonitor = () => {
 
   const handleSensorData = useCallback((event) => {
     try {
+      setIsLoadingData(true);
       const data = parseSensorData(event.target.value);
       if (data) {
         setSensorData(data);
-        
-        wsManager.send('SENSOR_DATA', {
-          deviceId: device?.id,
-          timestamp: new Date().toISOString(),
-          data
-        });
-        
         updateDataLogs(data);
       }
     } catch (error) {
       console.error('Error handling sensor data:', error);
       setError('Error processing sensor data');
+    } finally {
+      setIsLoadingData(false);
     }
-  }, [device, updateDataLogs]);
+  }, [updateDataLogs]);
+
+  const handleNotification = useCallback((event) => {
+    const value = event.target.value;
+    const parsedData = parseSensorData(value);
+    if (parsedData) {
+      setSensorData(parsedData);
+      updateDataLogs(parsedData);
+    }
+  }, [updateDataLogs]);
 
   const handleConnect = async () => {
     try {
       setError(null);
-      
-      if (device) {
-        setDevice(null);
-        setSensorData(null);
-        await new Promise(resolve => setTimeout(resolve, 2000));
-      }
+      setIsConnecting(true);
       
       const result = await connectBleDevice(
         () => {
@@ -144,6 +149,8 @@ const BleDeviceMonitor = () => {
       setError(error.message || 'Failed to connect to device');
       setDevice(null);
       setSensorData(null);
+    } finally {
+      setIsConnecting(false);
     }
   };
 
@@ -166,92 +173,137 @@ const BleDeviceMonitor = () => {
   ), [dataLogs]);
 
   return (
-    <div className="w-full max-w-4xl mx-auto p-4">
-      <Card className="mb-4">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Bluetooth className="h-6 w-6" />
+    <div className="device-monitor-container bg-gray-50">
+      <Card className="bg-white/80 backdrop-blur-sm shadow-sm hover:shadow-md transition-shadow">
+        <CardHeader className="border-b border-gray-100">
+          <CardTitle className="flex items-center gap-2 text-gray-800">
+            <Bluetooth className="h-6 w-6 text-blue-500" />
             Air Quality Monitor
           </CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="mb-4">
-            <h3 className="text-lg font-semibold mb-2">Location Info</h3>
-            {locationError ? (
-              <Alert variant="destructive">
-                <AlertDescription>Location Error: {locationError}</AlertDescription>
-              </Alert>
-            ) : location ? (
-              <div className="bg-gray-100 p-3 rounded-md">
-                <p>Latitude: {location.latitude}</p>
-                <p>Longitude: {location.longitude}</p>
+        <CardContent className="bg-gray-50/50">
+          <div className="device-header">
+            {isConnecting ? (
+              <div className="w-full flex justify-center">
+                <Loading size="default" />
               </div>
-            ) : (
-              <p className="text-gray-500">Fetching location...</p>
-            )}
-          </div>
-
-          <div className="space-y-4">
-            {!device ? (
-              <Button onClick={handleConnect} className="w-full">
+            ) : !device ? (
+              <Button onClick={handleConnect} className="connect-button">
+                <Bluetooth className="h-5 w-5" />
                 Connect to Device
               </Button>
             ) : (
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
+              <>
+                <div className="device-info">
+                  <Signal className="h-4 w-4" />
+                  <span>Connected to: {device.name}</span>
+                  <Badge variant="outline">{device.id}</Badge>
+                </div>
+                <div className="device-controls">
+                  <Button onClick={handleDisconnect} className="disconnect-button">
                     <Signal className="h-4 w-4" />
-                    <span>Connected to: {device.name}</span>
-                    <Badge variant="outline">{device.id}</Badge>
-                  </div>
-                  <Button 
-                    onClick={handleDisconnect}
-                    variant="destructive"
-                    size="sm"
-                  >
                     Disconnect
                   </Button>
                 </div>
-                
-                {sensorData && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {Object.entries(sensorData)
-                      .filter(([key]) => key !== 'location')
-                      .map(([key, data]) => (
-                        <SensorCard
-                          key={key}
-                          value={data.value}
-                          level={data.level}
-                          unit={getUnit(key)}
-                          label={getLabel(key)}
-                        />
-                    ))}
-                  </div>
-                )}
-              </div>
+              </>
             )}
+          </div>
 
-            {error && (
-              <Alert variant="destructive">
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
+          {location && (
+            <div className="location-info bg-white/80 backdrop-blur-sm rounded-lg shadow-sm">
+              <div className="font-semibold mb-1 text-gray-700">Location Info:</div>
+              <div className="text-gray-600">Latitude: {location.latitude}</div>
+              <div className="text-gray-600">Longitude: {location.longitude}</div>
+            </div>
+          )}
+
+          <div className="realtime-data-section">
+            <h3 className="text-lg font-semibold mb-3 text-gray-800 flex items-center gap-2">
+              <div 
+                className={`w-2 h-2 rounded-full transition-colors duration-300 ${
+                  !device 
+                    ? 'bg-gray-400' 
+                    : !sensorData 
+                      ? 'bg-yellow-500 animate-pulse' 
+                      : 'bg-green-500 animate-pulse'
+                }`}
+              />
+              Realtime Data
+            </h3>
+            {!device ? (
+              <div className="min-h-[200px] flex items-center justify-center bg-gray-50 rounded-lg">
+                <div className="text-gray-500">Connect to device first</div>
+              </div>
+            ) : !sensorData ? (
+              <div className="min-h-[200px] flex items-center justify-center bg-gray-50 rounded-lg">
+                <Loading />
+              </div>
+            ) : (
+              <>
+                <div className="sensor-grid">
+                  {Object.entries(sensorData)
+                    .filter(([key]) => key !== 'location' && key !== '_raw')
+                    .map(([key, data]) => (
+                      <SensorCard
+                        key={key}
+                        value={data.value}
+                        level={data.level}
+                        unit={getUnit(key)}
+                        label={getLabel(key)}
+                      />
+                    ))}
+                </div>
+                
+                <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+                  <div className="text-sm font-mono">
+                    <div className="font-semibold mb-2">Raw Data (18 bytes):</div>
+                    <div className="text-xs text-gray-600 mb-2">
+                      PM2.5: [0-2] | PM10: [3-5] | TEMP: [6-8] | HUM: [9-11] | CO2: [12-14] | VOC: [15-17]
+                    </div>
+                    <div className="grid grid-cols-6 md:grid-cols-9 gap-2">
+                      {sensorData._raw?.map((byte, index) => (
+                        <div key={index} className="text-center">
+                          <span className="bg-white px-2 py-1 rounded border">
+                            {byte.toString(16).padStart(2, '0')}
+                          </span>
+                          <span className="text-gray-400 text-[10px] block">[{index}]</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+
+          {error && (
+            <Alert variant="destructive" className="mt-4 bg-red-50 border-red-200">
+              <AlertDescription className="text-red-700">{error}</AlertDescription>
+            </Alert>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card className="mt-4 bg-white/80 backdrop-blur-sm shadow-sm hover:shadow-md transition-shadow">
+        <CardHeader className="border-b border-gray-100">
+          <CardTitle className="text-gray-800">Data Logs</CardTitle>
+        </CardHeader>
+        <CardContent className="bg-gray-50/50">
+          <div className="data-log-container">
+            {!device ? (
+              <div className="min-h-[200px] flex items-center justify-center bg-gray-50 rounded-lg">
+                <div className="text-gray-500">Connect to device first</div>
+              </div>
+            ) : dataLogs.length === 0 ? (
+              <div className="min-h-[200px] flex items-center justify-center bg-gray-50 rounded-lg">
+                <Loading />
+              </div>
+            ) : (
+              memoizedDataLog
             )}
           </div>
         </CardContent>
       </Card>
-
-      {device && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Data Logs</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="h-96 overflow-y-auto">
-              {memoizedDataLog}
-            </div>
-          </CardContent>
-        </Card>
-      )}
     </div>
   );
 };

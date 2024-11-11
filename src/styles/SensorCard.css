@@ -1,0 +1,42 @@
+.sensor-card {
+  @apply p-4 rounded-lg border shadow-sm hover:shadow-md transition-all duration-300 bg-white/80;
+}
+
+.sensor-value {
+  @apply text-2xl font-bold transition-all duration-300 ease-in-out transform;
+}
+
+.sensor-value:not(:hover) {
+  @apply hover:scale-105;
+}
+
+.sensor-label {
+  @apply text-sm text-gray-600 transition-colors duration-300;
+}
+
+/* 값이 변경될 때 애니메이션 효과 */
+@keyframes value-update {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.sensor-value.updated {
+  animation: value-update 0.3s ease-in-out;
+}
+
+@media (max-width: 640px) {
+  .sensor-card {
+    @apply p-3;
+  }
+
+  .sensor-value {
+    @apply text-xl;
+  }
+} 

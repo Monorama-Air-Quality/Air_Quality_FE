@@ -65,5 +65,28 @@ export const api = {
       console.error('Error getting device status:', error);
       throw error;
     }
+  },
+
+
+
+  async saveDeviceInfo(deviceInfo) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/device`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(deviceInfo),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Error saving device info:', error);
+      throw error;
+    }
   }
 }; 
