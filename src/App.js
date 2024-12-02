@@ -1,8 +1,20 @@
-import React from "react";
+import { createBrowserRouter, RouterProvider } from 'react-router-dom';
+import ProjectView from './components/ProjectView';
 import BleDeviceMonitor from './components/BleDeviceMonitor';
 
+const router = createBrowserRouter([
+  {
+    path: "/info",
+    element: <ProjectView />,
+  },
+  {
+    path: "/",
+    element: <BleDeviceMonitor />,
+  },
+]);
+
 function App() {
-  return <BleDeviceMonitor />;
+  return <RouterProvider router={router} />;
 }
 
 export default App;
