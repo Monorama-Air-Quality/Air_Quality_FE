@@ -3,7 +3,11 @@ const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
 export const api = {
   async fetchDeviceHistory(deviceId, startDate, endDate) {
     try {
-      console.log('Fetching device history...', { deviceId, startDate, endDate });
+      console.log("Fetching device history...", {
+        deviceId,
+        startDate,
+        endDate,
+      });
       const response = await fetch(
         `${API_BASE_URL}/devices/${deviceId}/history?start=${startDate}&end=${endDate}`
       );
@@ -12,21 +16,21 @@ export const api = {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       const data = await response.json();
-      console.log('History data received:', data);
+      console.log("History data received:", data);
       return data;
     } catch (error) {
-      console.error('Error fetching device history:', error);
+      console.error("Error fetching device history:", error);
       throw error;
     }
   },
 
   async saveDeviceData(deviceId, data) {
     try {
-      console.log('Saving device data...', { deviceId, data });
+      console.log("Saving device data...", { deviceId, data });
       const response = await fetch(`${API_BASE_URL}/devices/${deviceId}/data`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify(data),
       });
@@ -36,27 +40,29 @@ export const api = {
       }
 
       const result = await response.json();
-      console.log('Save response:', result);
+      console.log("Save response:", result);
       return result;
     } catch (error) {
-      console.error('Error saving device data:', error);
+      console.error("Error saving device data:", error);
       throw error;
     }
   },
 
   async getDeviceStatus(deviceId) {
     try {
-      console.log('Getting device status...', { deviceId });
-      const response = await fetch(`${API_BASE_URL}/devices/${deviceId}/status`);
+      console.log("Getting device status...", { deviceId });
+      const response = await fetch(
+        `${API_BASE_URL}/devices/${deviceId}/status`
+      );
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
       const status = await response.json();
-      console.log('Device status received:', status);
+      console.log("Device status received:", status);
       return status;
     } catch (error) {
-      console.error('Error getting device status:', error);
+      console.error("Error getting device status:", error);
       throw error;
     }
   },
@@ -64,9 +70,9 @@ export const api = {
   async saveDeviceInfo(deviceInfo) {
     try {
       const response = await fetch(`${API_BASE_URL}/device`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify(deviceInfo),
       });
@@ -77,7 +83,7 @@ export const api = {
 
       return await response.json();
     } catch (error) {
-      console.error('Error saving device info:', error);
+      console.error("Error saving device info:", error);
       throw error;
     }
   },
@@ -86,32 +92,35 @@ export const api = {
     try {
       const response = await fetch(`${API_BASE_URL}/projects`, {
         headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json'
-        }
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        },
       });
-      console.log('Project list response:', response);
+      console.log("Project list response:", response);
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
       const data = await response.json();
-      console.log('Project list response:', data);
+      console.log("Project list response:", data);
       return data;
     } catch (error) {
-      console.error('Error fetching project list:', error);
+      console.error("Error fetching project list:", error);
       throw error;
     }
   },
 
   async getProjectByDeviceId(deviceId) {
     try {
-      const response = await fetch(`${API_BASE_URL}/projects/device/${deviceId}`, {
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json'
+      const response = await fetch(
+        `${API_BASE_URL}/projects/device/${deviceId}`,
+        {
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+          },
         }
-      });
+      );
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -119,7 +128,7 @@ export const api = {
 
       return await response.json();
     } catch (error) {
-      console.error('Error fetching project by device ID:', error);
+      console.error("Error fetching project by device ID:", error);
       throw error;
     }
   },
@@ -127,14 +136,14 @@ export const api = {
   async updateProject(projectId, projectData) {
     try {
       const response = await fetch(`${API_BASE_URL}/projects/${projectId}`, {
-        method: 'PUT',
+        method: "PUT",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           projectName: projectData.projectName,
-          description: projectData.description
-        })
+          description: projectData.description,
+        }),
       });
 
       if (!response.ok) {
@@ -143,8 +152,58 @@ export const api = {
 
       return await response.json();
     } catch (error) {
-      console.error('Error updating project:', error);
+      console.error("Error updating project:", error);
       throw error;
     }
-  }
-}; 
+  },
+
+  async getDeviceInfo(deviceId) {
+    try {
+      console.log("Fetching device info...", { deviceId });
+      const response = await fetch(`${API_BASE_URL}/devices/${deviceId}`, {
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log("Device info received:", data);
+      return data;
+    } catch (error) {
+      console.error("Error fetching device info:", error);
+      throw error;
+    }
+  },
+
+  async updateDeviceLocation(deviceId, locationData) {
+    try {
+      console.log("Updating device location...", { deviceId, locationData });
+      const response = await fetch(
+        `${API_BASE_URL}/devices/${deviceId}/location`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(locationData),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+      console.log("Location update response:", result);
+      return result;
+    } catch (error) {
+      console.error("Error updating device location:", error);
+      throw error;
+    }
+  },
+};
