@@ -206,4 +206,46 @@ export const api = {
       throw error;
     }
   },
+
+  async createProject(projectData) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/projects/register`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(projectData),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Error creating project:', error);
+      throw error;
+    }
+  },
+
+  async searchSensorData(searchRequest, page, size) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/search?page=${page}&size=${size}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(searchRequest),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Error searching sensor data:', error);
+      throw error;
+    }
+  },
 };

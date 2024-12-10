@@ -12,6 +12,7 @@ import { api } from '../lib/api';
 import { DeviceInfoModal } from './DeviceInfoModal';
 import '../styles/BleDeviceMonitor.css';
 import { Loading } from './ui/loading';
+import { Link } from 'react-router-dom';
 
 export const getUnit = (key) => {
   const units = {
@@ -174,9 +175,20 @@ const BleDeviceMonitor = () => {
     <div className="device-monitor-container bg-gray-50">
       <Card className="bg-white/80 backdrop-blur-sm shadow-sm hover:shadow-md transition-shadow">
         <CardHeader className="border-b border-gray-100">
-          <CardTitle className="flex items-center gap-2 text-gray-800">
-            <Bluetooth className="h-6 w-6 text-blue-500" />
-            Air Quality Monitor
+          <CardTitle className="flex items-center justify-between">
+            <span className="text-gray-800 text-xl">Air Quality Monitor</span>
+            <div className="flex items-center gap-2">
+              <Link to="/admin">
+                <Button className="bg-blue-500 hover:bg-blue-600 text-white">
+                  Admin
+                </Button>
+              </Link>
+              <Link to="/user">
+                <Button className="bg-blue-500 hover:bg-blue-600 text-white">
+                  User
+                </Button>
+              </Link>
+            </div>
           </CardTitle>
         </CardHeader>
         <CardContent className="bg-gray-50/50">
@@ -242,8 +254,9 @@ const BleDeviceMonitor = () => {
                         label={getLabel(key)}
                       />
                     ))}
+
                 </div>
-                
+
                 <div className="mt-4 p-4 bg-gray-50 rounded-lg">
                   <div className="text-sm font-mono">
                     <div className="font-semibold mb-2">Raw Data (18 bytes):</div>
