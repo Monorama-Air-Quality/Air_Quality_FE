@@ -10,6 +10,7 @@ const SensorDataHistory = () => {
   const [page, setPage] = useState(0);
   const [size, setSize] = useState(20);
   const [data, setData] = useState([]);
+  const [totalPages, setTotalPages] = useState(0);
   const [error, setError] = useState(null);
 
   const handleSearch = async (e) => {
@@ -37,11 +38,27 @@ const SensorDataHistory = () => {
       return;
     }
 
-    console.log(JSON.stringify(searchRequest));
-
     try {
       const result = await api.searchSensorData(searchRequest, page, size);
-      setData(result);
+      console.log('API Result:', JSON.stringify(result));
+      setData(result.content);
+      setTotalPages(result.totalPages);
+      console.log('Data:', result.content);
+      console.log('Total Pages:', result.totalPages);
+      if(data.length > 0) {
+        data[1].map((item, index) => {
+          console.log("index: " + index);
+          console.log("latitude: " + item.latitude);
+        console.log("longitude: " + item.longitude);
+        console.log("timestamp: " + item.timestamp);
+        console.log("pm25Value: " + item.pm25Value);
+        console.log("pm10Value: " + item.pm10Value);
+        console.log("temperature: " + item.temperature);
+        console.log("humidity: " + item.humidity);
+        console.log("co2Value: " + item.co2Value);
+          console.log("vocValue: " + item.vocValue);
+        })
+      }
     } catch (error) {
       console.error('Error fetching sensor data:', error);
       setError('Failed to fetch sensor data.');
@@ -55,6 +72,7 @@ const SensorDataHistory = () => {
     setPage(0);
     setSize(20);
     setData([]);
+    setTotalPages(0);
     setError(null);
   };
 
@@ -146,20 +164,22 @@ const SensorDataHistory = () => {
           {data.length > 0 && (
             <div className="mt-4">
               <h3 className="text-lg font-semibold">Results:</h3>
-              <ul>
-                {data.map((item, index) => (
-                  <li key={index} className="border-b py-2">
+              <div className="grid grid-cols-1 gap-4">
+                {data[1].map((item, index) => (
+                  <Card key={index} className="bg-gray-100 p-4 rounded-lg shadow-md">
                     <div>Device ID: {item.deviceId}</div>
                     <div>Timestamp: {item.timestamp}</div>
                     <div>PM2.5: {item.pm25Value} (Level: {item.pm25Level})</div>
-                    <div>Temperature: {item.temperature} (Level: {item.temperatureLevel})</div>
                     <div>PM10: {item.pm10Value} (Level: {item.pm10Level})</div>
+                    <div>Temperature: {item.temperature} (Level: {item.temperatureLevel})</div>
                     <div>Humidity: {item.humidity} (Level: {item.humidityLevel})</div>
                     <div>CO2: {item.co2Value} (Level: {item.co2Level})</div>
                     <div>VOC: {item.vocValue} (Level: {item.vocLevel})</div>
-                  </li>
+                    <div>Latitude: {item.latitude}</div>
+                    <div>Longitude: {item.longitude}</div>
+                  </Card>
                 ))}
-              </ul>
+              </div>
             </div>
           )}
         </CardContent>

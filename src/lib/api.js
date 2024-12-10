@@ -230,7 +230,7 @@ export const api = {
 
   async searchSensorData(searchRequest, page, size) {
     try {
-      const response = await fetch(`${API_BASE_URL}/search?page=${page}&size=${size}`, {
+      const response = await fetch(`${API_BASE_URL}/sensor-data/search?page=${page}&size=${size}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
