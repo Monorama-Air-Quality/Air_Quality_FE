@@ -8,7 +8,7 @@ const SensorDataHistory = () => {
   const [dateRange, setDateRange] = useState({ start: '', end: '' });
   const [apiKey, setApiKey] = useState('');
   const [page, setPage] = useState(0);
-  const [size, setSize] = useState(20);
+  const [size, setSize] = useState(10);
   const [data, setData] = useState([]);
   const [totalPages, setTotalPages] = useState(0);
   const [error, setError] = useState(null);
@@ -41,24 +41,8 @@ const SensorDataHistory = () => {
     try {
       const result = await api.searchSensorData(searchRequest, page, size);
       console.log('API Result:', JSON.stringify(result));
-      setData(result.content);
+      setData(result.content[1]);
       setTotalPages(result.totalPages);
-      console.log('Data:', result.content);
-      console.log('Total Pages:', result.totalPages);
-      if(data.length > 0) {
-        data[1].map((item, index) => {
-          console.log("index: " + index);
-          console.log("latitude: " + item.latitude);
-        console.log("longitude: " + item.longitude);
-        console.log("timestamp: " + item.timestamp);
-        console.log("pm25Value: " + item.pm25Value);
-        console.log("pm10Value: " + item.pm10Value);
-        console.log("temperature: " + item.temperature);
-        console.log("humidity: " + item.humidity);
-        console.log("co2Value: " + item.co2Value);
-          console.log("vocValue: " + item.vocValue);
-        })
-      }
     } catch (error) {
       console.error('Error fetching sensor data:', error);
       setError('Failed to fetch sensor data.');
@@ -70,10 +54,68 @@ const SensorDataHistory = () => {
     setDateRange({ start: '', end: '' });
     setApiKey('');
     setPage(0);
-    setSize(20);
+    setSize(10);
     setData([]);
     setTotalPages(0);
     setError(null);
+  };
+
+  const handlePageChange = async (newPage) => {
+    if (newPage < 0) {
+      newPage = 0; // 0페이지로 제한
+    } else if (newPage >= totalPages) {
+      newPage = totalPages - 1; // 최종 페이지로 제한
+    }
+    setPage(newPage);
+    const searchRequest = {
+      location: {
+        latitude: parseFloat(location.latitude),
+        longitude: parseFloat(location.longitude),
+      },
+      dateRange: {
+        start: new Date(dateRange.start),
+        end: new Date(dateRange.end),
+      },
+      apiKey,
+    };
+
+    try {
+      const result = await api.searchSensorData(searchRequest, newPage, size);
+      setData(result.content[1]);
+      setTotalPages(result.totalPages);
+    } catch (error) {
+      console.error('Error fetching sensor data:', error);
+      setError('Failed to fetch sensor data.');
+    }
+  };
+
+  const handleNextGroup = () => {
+    const nextPage = Math.floor(page / 10) * 10 + 10; // 다음 10페이지로 이동
+    handlePageChange(nextPage);
+  };
+
+  const handlePrevGroup = () => {
+    const prevPage = Math.floor(page / 10) * 10 - 10; // 이전 10페이지로 이동
+    handlePageChange(prevPage);
+  };
+
+  const getPaginationButtons = () => {
+    const buttons = [];
+    const startPage = Math.floor(page / 10) * 10;
+    const endPage = Math.min(startPage + 10, totalPages);
+
+    for (let i = startPage; i < endPage; i++) {
+      buttons.push(
+        <Button
+          key={i}
+          onClick={() => handlePageChange(i)}
+          className={`mx-1 ${page === i ? 'bg-blue-500 text-white' : 'bg-gray-300'}`}
+        >
+          {i + 1}
+        </Button>
+      );
+    }
+    return buttons;
   };
 
   return (
@@ -84,41 +126,67 @@ const SensorDataHistory = () => {
         </CardHeader>
         <CardContent className="p-6">
           <form onSubmit={handleSearch} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium mb-1">Location (Latitude)</label>
-              <input
-                type="text"
-                value={location.latitude}
-                onChange={(e) => setLocation({ ...location, latitude: e.target.value })}
-                className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
-              />
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">Location (Latitude)</label>
+                <input
+                  type="text"
+                  value={location.latitude}
+                  onChange={(e) => setLocation({ ...location, latitude: e.target.value })}
+                  className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Location (Longitude)</label>
+                <input
+                  type="text"
+                  value={location.longitude}
+                  onChange={(e) => setLocation({ ...location, longitude: e.target.value })}
+                  className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
             </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">Location (Longitude)</label>
-              <input
-                type="text"
-                value={location.longitude}
-                onChange={(e) => setLocation({ ...location, longitude: e.target.value })}
-                className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
-              />
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">Date Range (Start)</label>
+                <input
+                  type="date"
+                  value={dateRange.start}
+                  onChange={(e) => setDateRange({ ...dateRange, start: e.target.value })}
+                  className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Date Range (End)</label>
+                <input
+                  type="date"
+                  value={dateRange.end}
+                  onChange={(e) => setDateRange({ ...dateRange, end: e.target.value })}
+                  className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
             </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">Date Range (Start)</label>
-              <input
-                type="date"
-                value={dateRange.start}
-                onChange={(e) => setDateRange({ ...dateRange, start: e.target.value })}
-                className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">Date Range (End)</label>
-              <input
-                type="date"
-                value={dateRange.end}
-                onChange={(e) => setDateRange({ ...dateRange, end: e.target.value })}
-                className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
-              />
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">Page Number</label>
+                <input
+                  type="number"
+                  value={page}
+                  onChange={(e) => setPage(Number(e.target.value))}
+                  className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
+                  min="0"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Size</label>
+                <input
+                  type="number"
+                  value={size}
+                  onChange={(e) => setSize(Number(e.target.value))}
+                  className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
+                  min="1"
+                />
+              </div>
             </div>
             <div>
               <label className="block text-sm font-medium mb-1">API Key</label>
@@ -128,26 +196,6 @@ const SensorDataHistory = () => {
                 onChange={(e) => setApiKey(e.target.value)}
                 className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
                 required
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">Page Number</label>
-              <input
-                type="number"
-                value={page}
-                onChange={(e) => setPage(Number(e.target.value))}
-                className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
-                min="0"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">Size</label>
-              <input
-                type="number"
-                value={size}
-                onChange={(e) => setSize(Number(e.target.value))}
-                className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
-                min="1"
               />
             </div>
             <div className="flex justify-end gap-2">
@@ -165,7 +213,7 @@ const SensorDataHistory = () => {
             <div className="mt-4">
               <h3 className="text-lg font-semibold">Results:</h3>
               <div className="grid grid-cols-1 gap-4">
-                {data[1].map((item, index) => (
+                {data.map((item, index) => (
                   <Card key={index} className="bg-gray-100 p-4 rounded-lg shadow-md">
                     <div>Device ID: {item.deviceId}</div>
                     <div>Timestamp: {item.timestamp}</div>
@@ -179,6 +227,21 @@ const SensorDataHistory = () => {
                     <div>Longitude: {item.longitude}</div>
                   </Card>
                 ))}
+              </div>
+              <div className="flex justify-center mt-4">
+                <Button onClick={() => handlePageChange(Math.max(0, Math.floor(page / 10) * 10 - 10))} disabled={page === 0}>
+                  &lt;&lt;
+                </Button>
+                <Button onClick={() => handlePageChange(Math.max(0, Math.floor(page / 10) * 10 - 1))} disabled={page === 0}>
+                  &lt;
+                </Button>
+                {getPaginationButtons()}
+                <Button onClick={() => handlePageChange(Math.min(totalPages - 1, Math.floor(page / 10) * 10 + 10))} disabled={page >= totalPages - 1}>
+                  &gt;
+                </Button>
+                <Button onClick={() => handlePageChange(totalPages - 1)} disabled={page >= totalPages - 1}>
+                  &gt;&gt;
+                </Button>
               </div>
             </div>
           )}
